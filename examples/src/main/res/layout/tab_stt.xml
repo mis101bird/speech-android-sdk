@@ -62,8 +62,7 @@
         android:layout_marginTop="16dp"
         android:background="@drawable/back"
         android:editable="true"
-        android:height="150dp"
-        android:text=""/>
+        android:height="150dp" />
 
     <TextView
         android:id="@+id/sttStatus"

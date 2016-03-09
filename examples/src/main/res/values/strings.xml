@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">IBM Watson Speech SDK</string>
+    <string name="app_name">IBM Secretary</string>
     <string name="action_settings">Settings</string>
     <string name="buttonRecord">start recording</string>
 
@@ -13,10 +13,16 @@
     <string name="modelDefault">en-US_BroadbandModel</string>
     <string name="voiceDefault">en-US_MichaelVoice</string>
 
-    <!-- default credentials -->
-    <string name="defaultPassword">&lt;username&gt;</string>
-    <string name="defaultUsername">&lt;password&gt;</string>
-    <string name="defaultTokenFactory">&lt;token-factory-url&gt;</string>
+    <!-- STT default credentials --> 
+    <string name="STTdefaultUsername">dfc6eba9-459d-41ff-8127-2f1ae329c275</string>
+     <string name="STTdefaultPassword">0sb0ddkAnvJR</string>
+     <string name="STTdefaultTokenFactory">https://stream.watsonplatform.net/speech-to-text/api</string> 
+
+
+    <!-- TTS default credentials --> 
+    <string name="TTSdefaultUsername">0c0c20b5-0736-43f0-a394-d14b203b3d66</string> 
+    <string name="TTSdefaultPassword">hXcIfHjNpHve</string> 
+    <string name="TTSdefaultTokenFactory">https://stream.watsonplatform.net/text-to-speech/api</string> 
 
     <!-- TTS default prompts -->
     <string name="ttsEnglishPrompt">Conscious of its spiritual and moral heritage, the Union is founded on the indivisible, universal values of human dignity, freedom, equality and solidarity; it is based on the principles of democracy and the rule of law. It places the individual at the heart of its activities, by establishing the citizenship of the Union and by creating an area of freedom, security and justice.</string>

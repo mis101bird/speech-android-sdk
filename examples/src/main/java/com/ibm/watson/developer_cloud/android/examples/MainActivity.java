@@ -24,7 +24,9 @@ import java.net.URISyntaxException;
 import java.util.Vector;
 
 import android.app.FragmentTransaction;
+import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.ColorDrawable;
 import android.os.AsyncTask;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -42,6 +44,7 @@ import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -107,13 +110,13 @@ public class MainActivity extends Activity {
             if (jsonModels == null) {
                 jsonModels = new STTCommands().doInBackground();
                 if (jsonModels == null) {
-                    displayResult("Please, check internet connection.");
+                    displayResult("Please, check internet connection."); //debug用
                     return mView;
                 }
             }
             addItemsOnSpinnerModels();
 
-            displayStatus("please, press the button to start speaking");
+            displayStatus("please, press the button to start speaking"); //debug用
 
             Button buttonRecord = (Button)mView.findViewById(R.id.buttonRecord);
             buttonRecord.setOnClickListener(new View.OnClickListener() {
@@ -129,13 +132,15 @@ public class MainActivity extends Activity {
                         mRecognitionResults = "";
                         displayResult(mRecognitionResults);
                         ItemModel item = (ItemModel)spinner.getSelectedItem();
+                        Log.d(TAG, "所選語言: "+item.getModelName());
+                        //------------------------------------------------------------------//
                         SpeechToText.sharedInstance().setModel(item.getModelName());
                         displayStatus("connecting to the STT service...");
                         // start recognition
                         new AsyncTask<Void, Void, Void>(){
                             @Override
                             protected Void doInBackground(Void... none) {
-                                SpeechToText.sharedInstance().recognize();
+                                SpeechToText.sharedInstance().recognize(); //開始轉錄
                                 return null;
                             }
                         }.execute();
@@ -174,34 +179,17 @@ public class MainActivity extends Activity {
 
         // initialize the connection to the Watson STT service
         private boolean initSTT() {
-
-            // DISCLAIMER: please enter your credentials or token factory in the lines below
-            String username = getString(R.string.defaultUsername);
-            String password = getString(R.string.defaultPassword);
-
-            String tokenFactoryURL = getString(R.string.defaultTokenFactory);
+            // initialize the connection to the Watson STT service
+            String username = getString(R.string.STTdefaultUsername);
+            String password = getString(R.string.STTdefaultPassword);
+            String tokenFactoryURL = getString(R.string.STTdefaultTokenFactory);
             String serviceURL = "wss://stream.watsonplatform.net/speech-to-text/api";
-
-            SpeechConfiguration sConfig = new SpeechConfiguration(SpeechConfiguration.AUDIO_FORMAT_OGGOPUS);
-            //SpeechConfiguration sConfig = new SpeechConfiguration(SpeechConfiguration.AUDIO_FORMAT_DEFAULT);
-
-            SpeechToText.sharedInstance().initWithContext(this.getHost(serviceURL), getActivity().getApplicationContext(), sConfig);
-
-            // token factory is the preferred authentication method (service credentials are not distributed in the client app)
-            if (tokenFactoryURL.equals(getString(R.string.defaultTokenFactory)) == false) {
-                SpeechToText.sharedInstance().setTokenProvider(new MyTokenProvider(tokenFactoryURL));
-            }
+            SpeechConfiguration sConfig = new SpeechConfiguration(SpeechConfiguration.AUDIO_FORMAT_OGGOPUS); //壓縮音擋
+            SpeechToText.sharedInstance().initWithContext(this.getHost(serviceURL), getActivity().getApplicationContext(), sConfig); //時體化
             // Basic Authentication
-            else if (username.equals(getString(R.string.defaultUsername)) == false) {
-                SpeechToText.sharedInstance().setCredentials(username, password);
-            } else {
-                // no authentication method available
-                return false;
-            }
-
-            SpeechToText.sharedInstance().setModel(getString(R.string.modelDefault));
+            SpeechToText.sharedInstance().setCredentials(username, password);
+            SpeechToText.sharedInstance().setModel(getString(R.string.modelDefault)); //預設SST語言
             SpeechToText.sharedInstance().setDelegate(this);
-
             return true;
         }
 
@@ -501,30 +489,13 @@ public class MainActivity extends Activity {
         }
 
         private boolean initTTS() {
-
-            // DISCLAIMER: please enter your credentials or token factory in the lines below
-
-            String username = getString(R.string.defaultUsername);
-            String password = getString(R.string.defaultPassword);
-            String tokenFactoryURL = getString(R.string.defaultTokenFactory);
+            String username = getString(R.string.TTSdefaultUsername);
+            String password = getString(R.string.TTSdefaultPassword);
+            String tokenFactoryURL = getString(R.string.TTSdefaultTokenFactory);
             String serviceURL = "https://stream.watsonplatform.net/text-to-speech/api";
-
             TextToSpeech.sharedInstance().initWithContext(this.getHost(serviceURL));
-
-            // token factory is the preferred authentication method (service credentials are not distributed in the client app)
-            if (tokenFactoryURL.equals(getString(R.string.defaultTokenFactory)) == false) {
-                TextToSpeech.sharedInstance().setTokenProvider(new MyTokenProvider(tokenFactoryURL));
-            }
-            // Basic Authentication
-            else if (username.equals(getString(R.string.defaultUsername)) == false) {
-                TextToSpeech.sharedInstance().setCredentials(username, password);
-            } else {
-                // no authentication method available
-                return false;
-            }
-
+            TextToSpeech.sharedInstance().setCredentials(username, password);
             TextToSpeech.sharedInstance().setVoice(getString(R.string.voiceDefault));
-
             return true;
         }
 
@@ -677,23 +648,21 @@ public class MainActivity extends Activity {
 			StrictMode.setThreadPolicy(policy);
 		}
 				
-		//setContentView(R.layout.activity_main);
-        setContentView(R.layout.activity_tab_text);
+		setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_tab_text);
 
         ActionBar actionBar = getActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-
+        requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         tabSTT = actionBar.newTab().setText("Speech to Text");
         tabTTS = actionBar.newTab().setText("Text to Speech");
-
         tabSTT.setTabListener(new MyTabListener(fragmentTabSTT));
         tabTTS.setTabListener(new MyTabListener(fragmentTabTTS));
 
         actionBar.addTab(tabSTT);
         actionBar.addTab(tabTTS);
 
-        //actionBar.setStackedBackgroundDrawable(new ColorDrawable(Color.parseColor("#B5C0D0")));
-	}
+        actionBar.setSplitBackgroundDrawable(new ColorDrawable(Color.parseColor("#336ebdc4")));
+    }
 
     static class MyTokenProvider implements TokenProvider {
 
