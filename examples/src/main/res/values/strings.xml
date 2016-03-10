@@ -10,7 +10,7 @@
     <string name="ttsInstructions">To get started choose a voice that matches the language of the text you will enter below. Enter text and press Speak to hear the results.</string>
 
     <!-- default model/voice -->
-    <string name="modelDefault">en-US_BroadbandModel</string>
+    <string name="modelDefault">zh-CN_BroadbandModel</string>
     <string name="voiceDefault">en-US_MichaelVoice</string>
 
     <!-- STT default credentials --> 
