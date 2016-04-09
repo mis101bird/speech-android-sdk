@@ -3,13 +3,36 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/back"
-    android:gravity="center">
-
-    <ImageButton
+    android:gravity="center"
+    android:weightSum="1">
+    <com.ibm.watson.developer_cloud.android.examples.MyRippleBackground
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="fill_parent"
+        android:layout_height="394dp"
+        android:id="@+id/ripple"
+        app:rb_color="#0066CC"
+        app:rb_radius="32dp"
+        app:rb_rippleAmount="1"
+        app:rb_duration="1000"
+        app:rb_scale="6"
+        android:layout_gravity="center"
+        android:gravity="center">
+    <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/secretary"
-        android:layout_gravity="center"
+        android:layout_centerInParent="true"
         android:src="@drawable/call"
         android:background="@android:color/transparent" />
+    </com.ibm.watson.developer_cloud.android.examples.MyRippleBackground>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Welcome to IBM app test"
+        android:id="@+id/Status"
+        android:textStyle="bold"
+        android:textSize="10pt"
+        android:gravity="top|center_horizontal" />
 </LinearLayout>

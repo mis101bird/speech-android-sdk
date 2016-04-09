@@ -2,4 +2,7 @@
 <resources>
     <color name="titleH1Color">#325C80</color>
     <color name="titleTextColor">#121212</color>
+    <color name="TalkrippelColor">#990000</color>
+    <color name="ListenrippelColor">#00CCCC</color>
+    <color name="WaitrippelColor">#336666</color>
 </resources>
