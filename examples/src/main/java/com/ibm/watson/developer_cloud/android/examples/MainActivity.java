@@ -17,14 +17,17 @@
 package com.ibm.watson.developer_cloud.android.examples;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -55,6 +58,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -81,6 +85,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 
 public class MainActivity extends Activity implements ISpeechDelegate{
 
@@ -504,8 +513,11 @@ public class MainActivity extends Activity implements ISpeechDelegate{
     }
     private void visualRecognition(String path){
         final File ans=getSmallImageFile(this.getBaseContext(), path, 600, 600, true);
-        displayStatus("Face Recognition...");
+        displayStatus("Face Recognition..." + ans.getAbsolutePath());
 
+        uploadImage(ans.getAbsolutePath());
+
+        /*
         new AsyncTask<Void, Void, ImageFaces>(){
             @Override
             protected ImageFaces doInBackground(Void... none) {
@@ -544,7 +556,7 @@ public class MainActivity extends Activity implements ISpeechDelegate{
 
             }
         }.execute();
-
+        */
     }
 
     private void weather(){
@@ -796,6 +808,60 @@ public class MainActivity extends Activity implements ISpeechDelegate{
 
                     }
                 }).show();
+    }
+
+    public void uploadImage(String name) {
+
+        try {
+            Bitmap bm = BitmapFactory.decodeFile(name);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
+            byte[] b = baos.toByteArray();
+            String encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+            /*
+            MultipartBody.Builder buildernew = new MultipartBody.Builder();
+            final MediaType MEDIA_TYPE_JPG = MediaType.parse("image/jpeg");
+
+            RequestBody req = buildernew.setType(MultipartBody.FORM)
+                    .addFormDataPart("name", "photo.jpg", RequestBody.create(MEDIA_TYPE_JPG, file)).build();
+*/
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url("http://nodered-flow.mybluemix.net/photo?photo=" + encodedImage)
+                    .build();
+
+            OkHttpClient client = new OkHttpClient();
+            okhttp3.Response response = client.newCall(request).execute();
+
+            Log.d("face response", "uploadImage:"+response.body().string());
+
+            JSONObject o=null;
+
+            try {
+                o = new JSONObject(response.body().string());
+                JSONArray images=o.getJSONArray("imageFaces");
+                String t1="total "+images.length()+" people\n";
+                if(images.length()>0){
+                    for (int i = 0; i < images.length(); i++) {
+                        t1 += "("+(i+1)+"): "+images.getJSONObject(i).getJSONObject("age").getString("ageRange")+", 性別: "+images.getJSONObject(i).getJSONObject("gender").getString("gender")+"\n";
+                    }
+                }else{
+                    t1+="Please try again.";
+                }
+                setDialog("人臉辨識結果", t1);
+                //displayStatus(t1);
+
+            } catch (JSONException e) {
+                Log.d("VisualRecognition","recognizedImage no JSON");
+                displayStatus("recognizedImage no JSON");
+            }
+            if(o!=null) {
+            }
+
+        } catch (UnknownHostException | UnsupportedEncodingException e) {
+            Log.e("Image", "Error: " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            Log.e("Image", "Other Error: " + e.getLocalizedMessage());
+        }
     }
 
 }

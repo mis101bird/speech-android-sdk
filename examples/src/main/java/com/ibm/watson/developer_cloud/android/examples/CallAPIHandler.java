@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -14,6 +15,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ibm.watson.developer_cloud.alchemy.v1.AlchemyVision;
 import com.ibm.watson.developer_cloud.alchemy.v1.model.ImageFaces;
+import com.squareup.okhttp.MultipartBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,13 +23,18 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
+import okhttp3.RequestBody;
 
 /**
  * Created by ser on 2016/3/10.
@@ -94,22 +101,22 @@ public class CallAPIHandler {
 
 }
 
-    
 
     public String getWeatherTerms(Context context ,HashMap<String,Double> loc) {
         String temp=null;
         if (ifInternetOpen(context)) {
             Log.d("Call API", "in Weather");
             try {
-                temp=run("https://twcservice.mybluemix.net/api/weather/v2/forecast/daily/10day?units=m&geocode="+loc.get("latitude")+"%2C"+loc.get("longitude")+"&language=en-US");
-
+                //temp=run("https://twcservice.mybluemix.net/api/weather/v2/forecast/daily/10day?units=m&geocode="+loc.get("latitude")+"%2C"+loc.get("longitude")+"&language=en-US");
+                temp=weatherun("http://nodered-flow.mybluemix.net/weather?lat="+loc.get("latitude")+"?lng="+loc.get("longitude"));
+                /*
                 try {
                     JSONObject jObj = new JSONObject(temp);
-                    temp=jObj.getJSONArray("forecasts").getJSONObject(0).getString("narrative");
+                    temp = jObj.getJSONArray("forecasts").getJSONObject(0).getString("narrative");
                 } catch (JSONException e) {
                     Log.d("Error in weather api",e.getMessage());
                 }
-
+             */
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -118,6 +125,7 @@ public class CallAPIHandler {
 
             Log.d("Internet Error", "user phone didn't open internet.");
         }
+
         return temp;
     }
     public String run(String url) throws IOException {
@@ -140,6 +148,17 @@ public class CallAPIHandler {
         return response.body().string();
 
     }
+
+    public String weatherun(String url) throws IOException {
+        //Authenticate認證
+        client = new OkHttpClient.Builder().build();
+        okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
+        okhttp3.Response response = client.newCall(request).execute();
+
+        return response.body().string();
+
+    }
+
     public void doVisualReconition(final File image){
 
         new AsyncTask<Void, Void, ImageFaces>(){
