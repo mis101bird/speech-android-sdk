@@ -74,6 +74,7 @@ import com.ibm.watson.developer_cloud.android.speech_to_text.v1.ISpeechDelegate;
 import com.ibm.watson.developer_cloud.android.speech_to_text.v1.SpeechToText;
 import com.ibm.watson.developer_cloud.android.text_to_speech.v1.TextToSpeech;
 import com.ibm.watson.developer_cloud.android.speech_common.v1.TokenProvider;
+import com.ibm.watson.developer_cloud.http.HttpMediaType;
 
 
 import org.apache.commons.io.IOUtils;
@@ -191,7 +192,7 @@ public class MainActivity extends Activity implements ISpeechDelegate{
         pak = new HashMap<>(); //App name, App package
         for ( int i=0; i < packinfo.size(); i++) {
             PackageInfo p = (PackageInfo) packinfo.get(i);
-            //Log.d("App", p.applicationInfo.loadLabel(getPackageManager()).toString()+": "+p.packageName);
+            //Log.d("App", "installed "+ p.applicationInfo.loadLabel(getPackageManager()).toString()+": "+p.packageName);
             pak.put(p.applicationInfo.loadLabel(getPackageManager()).toString(), p.packageName);
         }
 
@@ -278,16 +279,16 @@ public class MainActivity extends Activity implements ISpeechDelegate{
     /**
      * Play TTS Audio data
      */
-    public void playTTS(String ttsText) throws JSONException {
+    public void playTTS(InputStream is) throws JSONException {
 
         Log.d("TTS", "playTTS voice");
-        Log.d("TTS", "playTTS: "+ttsText);
+        //Log.d("TTS", "playTTS: "+ttsText);
         //Change Image State
         mState = ConnectionState.TALK;
         setSecretaryImage(imageId, mState);
 
         //Call the sdk function
-        TextToSpeech.sharedInstance().synthesize(ttsText);
+        TextToSpeech.sharedInstance().synthesize(is);
     }
 
     /**
@@ -513,11 +514,9 @@ public class MainActivity extends Activity implements ISpeechDelegate{
     }
     private void visualRecognition(String path){
         final File ans=getSmallImageFile(this.getBaseContext(), path, 600, 600, true);
-        displayStatus("Face Recognition..." + ans.getAbsolutePath());
+        displayStatus("Face Recognition...");
 
-        uploadImage(ans.getAbsolutePath());
 
-        /*
         new AsyncTask<Void, Void, ImageFaces>(){
             @Override
             protected ImageFaces doInBackground(Void... none) {
@@ -556,7 +555,7 @@ public class MainActivity extends Activity implements ISpeechDelegate{
 
             }
         }.execute();
-        */
+
     }
 
     private void weather(){
@@ -564,34 +563,18 @@ public class MainActivity extends Activity implements ISpeechDelegate{
         // make the device update its location
 
         final HashMap<String,Double> loc=getlocation();
-        new AsyncTask<Void, Void, String>(){
+        new AsyncTask<Void, Void, InputStream>(){
             @Override
-            protected String doInBackground(Void... none) {
-                Object ans="";
-                String s=null;
-                /*
-                boolean sendcall=false;
-                while(true){
-                    if(sendcall==false){
-                        apihelper.getWeatherTerms(context, loc);
-                        sendcall=true;
-                    }else{
-                        if( ( ans= apihelper.translatedWords.poll())!= null ){
-                            s = (String)ans;
-                            Log.d("weather","get 回傳: "+s);
-                            break;
-                        }
-                    }
-                }*/
+            protected InputStream doInBackground(Void... none) {
                 return apihelper.getWeatherTerms(context, loc);
             }
 
             @Override
-            protected void onPostExecute(String weather) {
+            protected void onPostExecute(InputStream weather) {
                 super.onPostExecute(weather);
                 try {
                     playTTS(weather);
-                    displayStatus("Speak: "+weather);
+                    displayStatus("Speak: weather");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -699,7 +682,7 @@ public class MainActivity extends Activity implements ISpeechDelegate{
     }
 
     public static Bitmap reduce(Bitmap bitmap, int width, int height, boolean isAdjust) {
-        // 如果想要的宽度和高度都比源图片小，就不压缩了，直接返回原图
+        // 如果想要的寬度和高度都比原圖片小，就不壓缩了，直接返回原圖
         if (bitmap.getWidth() < width && bitmap.getHeight() < height) {
             return bitmap;
         }
@@ -708,19 +691,17 @@ public class MainActivity extends Activity implements ISpeechDelegate{
             height = bitmap.getHeight();
         }
 
-        // 根据想要的尺寸精确计算压缩比例, 方法详解：public BigDecimal divide(BigDecimal divisor, int scale, int
-        // roundingMode);
-        // scale表示要保留的小数位, roundingMode表示如何处理多余的小数位，BigDecimal.ROUND_DOWN表示自动舍弃
+        // 根据想要的尺寸精確計算壓縮比例
         float sx = new BigDecimal(width).divide(new BigDecimal(bitmap.getWidth()), 4, BigDecimal
                 .ROUND_DOWN).floatValue();
         float sy = new BigDecimal(height).divide(new BigDecimal(bitmap.getHeight()), 4,
                 BigDecimal.ROUND_DOWN).floatValue();
-        if (isAdjust) {// 如果想自动调整比例，不至于图片会拉伸
+        if (isAdjust) {// 不拉伸圖片
             sx = (sx < sy ? sx : sy);
-            sy = sx;// 哪个比例小一点，就用哪个比例
+            sy = sx;// 哪個比例小就用哪個
         }
         Matrix matrix = new Matrix();
-        matrix.postScale(sx, sy);// 调用api中的方法进行压缩，就大功告成了
+        matrix.postScale(sx, sy);
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix,
                 true);
     }
@@ -808,60 +789,6 @@ public class MainActivity extends Activity implements ISpeechDelegate{
 
                     }
                 }).show();
-    }
-
-    public void uploadImage(String name) {
-
-        try {
-            Bitmap bm = BitmapFactory.decodeFile(name);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bm.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
-            byte[] b = baos.toByteArray();
-            String encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
-            /*
-            MultipartBody.Builder buildernew = new MultipartBody.Builder();
-            final MediaType MEDIA_TYPE_JPG = MediaType.parse("image/jpeg");
-
-            RequestBody req = buildernew.setType(MultipartBody.FORM)
-                    .addFormDataPart("name", "photo.jpg", RequestBody.create(MEDIA_TYPE_JPG, file)).build();
-*/
-            okhttp3.Request request = new okhttp3.Request.Builder()
-                    .url("http://nodered-flow.mybluemix.net/photo?photo=" + encodedImage)
-                    .build();
-
-            OkHttpClient client = new OkHttpClient();
-            okhttp3.Response response = client.newCall(request).execute();
-
-            Log.d("face response", "uploadImage:"+response.body().string());
-
-            JSONObject o=null;
-
-            try {
-                o = new JSONObject(response.body().string());
-                JSONArray images=o.getJSONArray("imageFaces");
-                String t1="total "+images.length()+" people\n";
-                if(images.length()>0){
-                    for (int i = 0; i < images.length(); i++) {
-                        t1 += "("+(i+1)+"): "+images.getJSONObject(i).getJSONObject("age").getString("ageRange")+", 性別: "+images.getJSONObject(i).getJSONObject("gender").getString("gender")+"\n";
-                    }
-                }else{
-                    t1+="Please try again.";
-                }
-                setDialog("人臉辨識結果", t1);
-                //displayStatus(t1);
-
-            } catch (JSONException e) {
-                Log.d("VisualRecognition","recognizedImage no JSON");
-                displayStatus("recognizedImage no JSON");
-            }
-            if(o!=null) {
-            }
-
-        } catch (UnknownHostException | UnsupportedEncodingException e) {
-            Log.e("Image", "Error: " + e.getLocalizedMessage());
-        } catch (Exception e) {
-            Log.e("Image", "Other Error: " + e.getLocalizedMessage());
-        }
     }
 
 }

@@ -98,24 +98,23 @@ public class TTSUtility extends Application {
 
 	/**
 	 * Text to speech
-	 * @param arguments
 	 */
-	public void synthesize(String[] arguments) {
+	public void synthesize(InputStream is) {
+        /*
 		Log.i(TAG, "Start requesting TTS... ("+this.codec+")");
 		try {
 			parseParams(arguments);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+        */
         if(this.codec == CODEC_WAV){
             this.sampleRate = CODEC_WAV_SAMPLE_RATE;
         }
         else{
             this.sampleRate = CODEC_OPUS_SAMPLE_RATE;
         }
-
-		TTSThread thread = new TTSThread();
+		TTSThread thread = new TTSThread(is);
 		thread.setName("TTSThread");
 		thread.start();
 	}
@@ -200,15 +199,23 @@ public class TTSUtility extends Application {
 	 * @author chienlk
 	 *
 	 */
-	public class TTSThread extends Thread {
+	public class TTSThread extends Thread implements Runnable{
+
+        private InputStream is=null;
+
+        public TTSThread(InputStream is) {
+            this.is=is;
+            // store parameter for later user
+        }
+
 		@Override
 		public void run() {
 			android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 			
 			HttpResponse post;
 			try {
-				post = createPost(server, username, password, token, content, voice, codec);
-		        InputStream is = post.getEntity().getContent();
+				//post = createPost(server, username, password, token, content, voice, codec);
+		        //InputStream is = post.getEntity().getContent();
 
 				byte[] data = null;
 				if(codec == CODEC_WAV) {
@@ -225,7 +232,7 @@ public class TTSUtility extends Application {
 				e.printStackTrace();
 			} finally {
                 Log.i(TAG, "Stopping audioTrack...");
-				if (audioTrack != null && audioTrack.getState() != AudioTrack.STATE_UNINITIALIZED) {
+				if (audioTrack != null && audioTrack.getState() != AudioTrack.STATE_UNINITIALIZED){
 					audioTrack.release();
 				}
 			}

@@ -21,8 +21,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -102,13 +105,13 @@ public class CallAPIHandler {
 }
 
 
-    public String getWeatherTerms(Context context ,HashMap<String,Double> loc) {
-        String temp=null;
+    public InputStream getWeatherTerms(Context context ,HashMap<String,Double> loc) {
+        InputStream temp=null;
         if (ifInternetOpen(context)) {
             Log.d("Call API", "in Weather");
             try {
                 //temp=run("https://twcservice.mybluemix.net/api/weather/v2/forecast/daily/10day?units=m&geocode="+loc.get("latitude")+"%2C"+loc.get("longitude")+"&language=en-US");
-                temp=weatherun("http://nodered-flow.mybluemix.net/weather?lat="+loc.get("latitude")+"?lng="+loc.get("longitude"));
+                temp=weatherun("http://nodered-flow.mybluemix.net/weather?lat="+loc.get("latitude")+"&lng="+loc.get("longitude"));
                 /*
                 try {
                     JSONObject jObj = new JSONObject(temp);
@@ -149,13 +152,24 @@ public class CallAPIHandler {
 
     }
 
-    public String weatherun(String url) throws IOException {
+    public InputStream weatherun(String url) throws IOException {
         //Authenticate認證
         client = new OkHttpClient.Builder().build();
         okhttp3.Request request = new okhttp3.Request.Builder().url(url).build();
         okhttp3.Response response = client.newCall(request).execute();
-
-        return response.body().string();
+        InputStream inputStream= response.body().byteStream();
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        byte[] bmp_buffer;
+        int len = 0;
+        while( (len=inputStream.read(buffer)) != -1){
+            outStream.write(buffer, 0, len);
+        }
+        outStream.close();
+        inputStream.close();
+        bmp_buffer=outStream.toByteArray();
+        InputStream myInputStream = new ByteArrayInputStream(bmp_buffer);
+        return myInputStream;
 
     }
 
